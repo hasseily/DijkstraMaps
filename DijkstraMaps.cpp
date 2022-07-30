@@ -17,18 +17,18 @@
 #define MAPW 32
 #define MAPH 32
 
-constexpr INT8 W_WALL = INT8_MAX;
+constexpr int W_WALL = INT_MAX;
 
-using MapMatrix = char[MAPW][MAPH];
+using MapMatrix = int[MAPW][MAPH];
 
 class PathPoint {
 public:
-	PathPoint(INT8 a = 0, INT8 b = 0) { x = a; y = b; }
+	PathPoint(int a = 0, int b = 0) { x = a; y = b; }
 	bool operator ==(const PathPoint& o) { return o.x == x && o.y == y; }
 	PathPoint operator +(const PathPoint& o) {
 		return { o.x + x, o.y + y };
 	}
-	INT8 x, y;
+	int x, y;
 };
 
 class PathfindingDMap	// Dijkstra map
@@ -51,9 +51,9 @@ public:
 		PathPoint neighbour;
 
 		// Start by filling the filledDMap with the starting DMap
-		for (INT8 j = 0; j < MAPH; j++)
+		for (int j = 0; j < MAPH; j++)
 		{
-			for (INT8 i = 0; i < MAPW; i++)
+			for (int i = 0; i < MAPW; i++)
 			{
 				auto dval = (*m_dmap)[i][j];
 				m_filledDMap[i][j] = dval;
@@ -66,11 +66,11 @@ public:
 		while (!isStable)
 		{
 			isStable = true;
-			for (INT8 j = 0; j < MAPH; j++)	// h
+			for (int j = 0; j < MAPH; j++)	// h
 			{
-				for (INT8 i = 0; i < MAPW; i++)	// w
+				for (int i = 0; i < MAPW; i++)	// w
 				{
-					if (m_filledDMap[i][j] == 127)		// wall
+					if (m_filledDMap[i][j] == W_WALL)		// wall
 						continue;
 					for (auto n : neighbours) {
 						neighbour.x = i + n.x;
@@ -155,10 +155,10 @@ int main(int argc, char* argv[]) {
 	// Reverse the matrices so it is correct
 	// We needed the temp ones to make them humanly readable
 	MapMatrix m, dmmap;
-	INT8 dmapVal;
-	for (INT8 j = 0; j < MAPH; j++)
+	int dmapVal;
+	for (int j = 0; j < MAPH; j++)
 	{
-		for (INT8 i = 0; i < MAPW; i++)
+		for (int i = 0; i < MAPW; i++)
 		{
 			m[i][j] = tmp_m[j][i];
 			switch (m[i][j])
@@ -219,9 +219,9 @@ int main(int argc, char* argv[]) {
 	{
 		return GetLastError();
 	}
-	for (INT8 y = -1; y <= MAPH; y++) {
-		// for (INT8 x = -1; x <= MAPW; x++) {	// to add vertical walls
-		for (INT8 x = 0; x < MAPW; x++) {		// no vertical walls
+	for (int y = -1; y <= MAPH; y++) {
+		// for (int x = -1; x <= MAPW; x++) {	// to add vertical walls
+		for (int x = 0; x < MAPW; x++) {		// no vertical walls
 			if (x < 0 || y < 0 || x > (MAPW - 1) || y > (MAPH - 1) || dmmap[x][y] == W_WALL)
 				std::cout << char(0xdb) << char(0xdb) << char(0xdb) << char(0xdb);	// Draw walls
 			else if ((*filledDMap)[x][y] > 0)

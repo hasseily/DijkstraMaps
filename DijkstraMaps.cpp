@@ -38,7 +38,7 @@ public:
 	{
 		m_map = _stepweightsMap;
 		m_dmap = _goalsDMap;
-		SimpleMath::Vector2 neighbour;
+		XMINT2 neighbour;
 
 		int _mapw = _stepweightsMap->at(0).size();
 		int _maph = _stepweightsMap->size();
@@ -77,10 +77,11 @@ public:
 
 						auto neighbourVal = m_filledDMap[neighbour.x][neighbour.y];
 						// check if the neighbour is lower value (including movement cost)
-						if ((m_filledDMap[i][j] - neighbourVal) > ((*m_map)[i][j] + 1))
+						auto stepval = (*m_map)[i][j] + 1;
+						if ((m_filledDMap[i][j] - neighbourVal) > stepval)
 						{
 							// set the value to the neighbour + 1, plus the movement cost
-							m_filledDMap[i][j] = MIN(neighbourVal + (*m_map)[i][j] + 1, W_WALL - 1);
+							m_filledDMap[i][j] = MIN(neighbourVal + stepval, W_WALL - 1);
 							isStable = false;
 						}
 					};

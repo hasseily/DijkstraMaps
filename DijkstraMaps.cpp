@@ -7,6 +7,9 @@
 #include <iostream>
 #include <ctime>
 #include <Windows.h>
+#include <DirectXMath.h>
+
+using namespace DirectX;
 
 // Use our own min/max
 #define NOMINMAX
@@ -21,22 +24,12 @@ constexpr int W_WALL = INT_MAX;
 
 using MapMatrix = int[MAPW][MAPH];
 
-class PathPoint {
-public:
-	PathPoint(int a = 0, int b = 0) { x = a; y = b; }
-	bool operator ==(const PathPoint& o) { return o.x == x && o.y == y; }
-	PathPoint operator +(const PathPoint& o) {
-		return { o.x + x, o.y + y };
-	}
-	int x, y;
-};
-
 class PathfindingDMap	// Dijkstra map
 {
 public:
 	PathfindingDMap() {
-		neighbours[0] = PathPoint(0, -1); neighbours[1] = PathPoint(-1, 0);
-		neighbours[2] = PathPoint(0, 1); neighbours[3] = PathPoint(1, 0);
+		neighbours[0] = XMINT2(0, -1); neighbours[1] = XMINT2(-1, 0);
+		neighbours[2] = XMINT2(0, 1); neighbours[3] = XMINT2(1, 0);
 	}
 
 	void reset() {
@@ -48,7 +41,7 @@ public:
 	{
 		m_map = _stepweightsMap;
 		m_dmap = _goalsDMap;
-		PathPoint neighbour;
+		XMINT2 neighbour;
 
 		// Start by filling the filledDMap with the starting DMap
 		for (int j = 0; j < MAPH; j++)
@@ -113,7 +106,7 @@ public:
 
 private:
 	MapMatrix m_filledDMap;		// filled dmap
-	PathPoint neighbours[4];
+	XMINT2 neighbours[4];
 };
 
 int main(int argc, char* argv[]) {

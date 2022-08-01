@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <iostream>
 #include <ctime>
+#include <vector>
+#include "DirectXTK12-jun2022/Inc/SimpleMath.h"
 #include <Windows.h>
 
 // Use our own min/max
@@ -14,29 +16,17 @@
 #define  MAX(a,b)          (((a) > (b)) ? (a) : (b))
 #define  MIN(a,b)          (((a) < (b)) ? (a) : (b))
 
-#define MAPW 32
-#define MAPH 32
+constexpr int W_WALL = INT16_MAX;
 
-constexpr int W_WALL = INT_MAX;
-
-using MapMatrix = int[MAPW][MAPH];
-
-class PathPoint {
-public:
-	PathPoint(int a = 0, int b = 0) { x = a; y = b; }
-	bool operator ==(const PathPoint& o) { return o.x == x && o.y == y; }
-	PathPoint operator +(const PathPoint& o) {
-		return { o.x + x, o.y + y };
-	}
-	int x, y;
-};
+using MapMatrix = std::vector<std::vector<int>>;
+using namespace DirectX;
 
 class PathfindingDMap	// Dijkstra map
 {
 public:
 	PathfindingDMap() {
-		neighbours[0] = PathPoint(0, -1); neighbours[1] = PathPoint(-1, 0);
-		neighbours[2] = PathPoint(0, 1); neighbours[3] = PathPoint(1, 0);
+		neighbours[0] = SimpleMath::Vector2(0, -1); neighbours[1] = SimpleMath::Vector2(-1, 0);
+		neighbours[2] = SimpleMath::Vector2(0, 1); neighbours[3] = SimpleMath::Vector2(1, 0);
 	}
 
 	void reset() {
@@ -48,17 +38,13 @@ public:
 	{
 		m_map = _stepweightsMap;
 		m_dmap = _goalsDMap;
-		PathPoint neighbour;
+		SimpleMath::Vector2 neighbour;
+
+		int _mapw = _stepweightsMap->at(0).size();
+		int _maph = _stepweightsMap->size();
 
 		// Start by filling the filledDMap with the starting DMap
-		for (int j = 0; j < MAPH; j++)
-		{
-			for (int i = 0; i < MAPW; i++)
-			{
-				auto dval = (*m_dmap)[i][j];
-				m_filledDMap[i][j] = dval;
-			}
-		}
+		m_filledDMap = MapMatrix(*m_dmap);
 
 		// next keep calculating until the map doesn't change any more
 		bool isStable = false;
@@ -66,9 +52,9 @@ public:
 		while (!isStable)
 		{
 			isStable = true;
-			for (int j = 0; j < MAPH; j++)	// h
+			for (int i = 0; i < _mapw; i++)
 			{
-				for (int i = 0; i < MAPW; i++)	// w
+				for (int j = 0; j < _mapw; j++)
 				{
 					if (m_filledDMap[i][j] == W_WALL)		// wall
 						continue;
@@ -77,15 +63,15 @@ public:
 						neighbour.y = j + n.y;
 						// wrap around or not
 						if (neighbour.x < 0)
-							neighbour.x = MAPW - 1;
+							neighbour.x = _mapw - 1;
 							// continue;
-						if (neighbour.x == MAPW)	// w
+						if (neighbour.x == _mapw)	// w
 							neighbour.x = 0;
 							// continue;
 						if (neighbour.y < 0)
-							// neighbour.y = MAPH - 1;
+							// neighbour.y = _maph - 1;
 							continue;
-						if (neighbour.y == MAPH)	// h
+						if (neighbour.y == _maph)	// h
 							// neighbour.y = 0;
 							continue;
 
@@ -113,12 +99,12 @@ public:
 
 private:
 	MapMatrix m_filledDMap;		// filled dmap
-	PathPoint neighbours[4];
+	SimpleMath::Vector2 neighbours[4];
 };
 
 int main(int argc, char* argv[]) {
 	srand(clock());
-	MapMatrix tmp_m = {	// step costs
+	MapMatrix tmp_matrix_steps = {	// step costs, in [j][i]
 			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -152,16 +138,23 @@ int main(int argc, char* argv[]) {
 			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 	};
-	// Reverse the matrices so it is correct
-	// We needed the temp ones to make them humanly readable
-	MapMatrix m, dmmap;
+
+	// Transpose the matrix so that we do operations against [x][y]
+	// and because y never rolls around we can do batch operations on multiple y values
+
+	int _mapw = tmp_matrix_steps.size();
+	int _maph = tmp_matrix_steps.at(0).size();
+
+	MapMatrix matrix_steps = MapMatrix(tmp_matrix_steps);
+	MapMatrix matrix_basemap = MapMatrix(matrix_steps);
 	int dmapVal;
-	for (int j = 0; j < MAPH; j++)
+	for (int j = 0; j < _maph; j++)
 	{
-		for (int i = 0; i < MAPW; i++)
+		for (int i = 0; i < _mapw; i++)
 		{
-			m[i][j] = tmp_m[j][i];
-			switch (m[i][j])
+			// transpose and calculate
+			matrix_steps[i][j] = tmp_matrix_steps[j][i];
+			switch (matrix_steps[i][j])
 			{
 			case 9:		// wall
 				dmapVal = W_WALL;
@@ -172,15 +165,15 @@ int main(int argc, char* argv[]) {
 				dmapVal = W_WALL - 1;
 				break;
 			}
-			dmmap[i][j] = dmapVal;
+			matrix_basemap[i][j] = dmapVal;
 		}
 	};
 
 	PathfindingDMap dm;
 	
-	dmmap[28][9] = 0;	// Set a goal;
-	dmmap[15][23] = 0;	// Set a goal;
-	dmmap[10][5] = 0;	// Set a goal;
+	matrix_basemap[28][9] = 0;	// Set a goal;
+	matrix_basemap[15][23] = 0;	// Set a goal;
+	matrix_basemap[10][5] = 0;	// Set a goal;
 
 	clock_t start;
 	clock_t diff;
@@ -190,7 +183,7 @@ int main(int argc, char* argv[]) {
 
 	for (int a = 0; a < iters; a++)
 	{
-		dm.FillDMap(&dmmap, &m);
+		dm.FillDMap(&matrix_basemap, &matrix_steps);
 		dm.reset();
 	}
 
@@ -198,7 +191,7 @@ int main(int argc, char* argv[]) {
 	msec = diff * 1000 / CLOCKS_PER_SEC;
 	printf("Time taken for %d Dijkstra Maps: %d seconds %d milliseconds\n", iters, msec / 1000, msec % 1000);
 
-	auto ctIter = dm.FillDMap(&dmmap, &m);
+	auto ctIter = dm.FillDMap(&matrix_basemap, &matrix_steps);
 	std::cout << "Stable at iteration " << ctIter << "\n";
 
 	auto filledDMap = dm.GetFinalDMap();
@@ -219,18 +212,18 @@ int main(int argc, char* argv[]) {
 	{
 		return GetLastError();
 	}
-	for (int y = -1; y <= MAPH; y++) {
+	for (int y = -1; y <= _maph; y++) {
 		// for (int x = -1; x <= MAPW; x++) {	// to add vertical walls
-		for (int x = 0; x < MAPW; x++) {		// no vertical walls
-			if (x < 0 || y < 0 || x > (MAPW - 1) || y > (MAPH - 1) || dmmap[x][y] == W_WALL)
+		for (int x = 0; x < _mapw; x++) {		// no vertical walls
+			if (x < 0 || y < 0 || x > (_mapw - 1) || y > (_maph - 1) || matrix_basemap[x][y] == W_WALL)
 				std::cout << char(0xdb) << char(0xdb) << char(0xdb) << char(0xdb);	// Draw walls
 			else if ((*filledDMap)[x][y] > 0)
 			{
-				char buf[5];
+				char buf[30];
 				sprintf_s(buf, "%4d", (*filledDMap)[x][y]);
-				if (m[x][y] == 1)	// door
+				if (matrix_steps[x][y] == 1)	// door
 					std::cout << "\033[1;44m" << buf << "\033[0m";
-				else if (m[x][y] == 4)	// fire wall
+				else if (matrix_steps[x][y] == 4)	// fire wall
 					std::cout << "\033[1;41m" << buf << "\033[0m";
 				else
 				{

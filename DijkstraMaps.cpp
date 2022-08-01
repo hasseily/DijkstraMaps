@@ -10,11 +10,6 @@
 #include <DirectXMath.h>
 #include <Windows.h>
 
-// Use our own min/max
-#define NOMINMAX
-
-#define  MAX(a,b)          (((a) > (b)) ? (a) : (b))
-#define  MIN(a,b)          (((a) < (b)) ? (a) : (b))
 
 constexpr int W_WALL = INT16_MAX;
 
@@ -81,7 +76,7 @@ public:
 						if ((m_filledDMap[i][j] - neighbourVal) > stepval)
 						{
 							// set the value to the neighbour + 1, plus the movement cost
-							m_filledDMap[i][j] = MIN(neighbourVal + stepval, W_WALL - 1);
+							m_filledDMap[i][j] = min(neighbourVal + stepval, W_WALL - 1);
 							isStable = false;
 						}
 					};
@@ -141,7 +136,6 @@ int main(int argc, char* argv[]) {
 	};
 
 	// Transpose the matrix so that we do operations against [x][y]
-	// and because y never rolls around we can do batch operations on multiple y values
 
 	int _mapw = tmp_matrix_steps.size();
 	int _maph = tmp_matrix_steps.at(0).size();
@@ -149,9 +143,9 @@ int main(int argc, char* argv[]) {
 	MapMatrix matrix_steps = MapMatrix(tmp_matrix_steps);
 	MapMatrix matrix_basemap = MapMatrix(matrix_steps);
 	int dmapVal;
-	for (int j = 0; j < _maph; j++)
+	for (int i = 0; i < _mapw; i++)
 	{
-		for (int i = 0; i < _mapw; i++)
+		for (int j = 0; j < _mapw; j++)
 		{
 			// transpose and calculate
 			matrix_steps[i][j] = tmp_matrix_steps[j][i];

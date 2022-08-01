@@ -7,7 +7,7 @@
 #include <iostream>
 #include <ctime>
 #include <vector>
-#include "DirectXTK12-jun2022/Inc/SimpleMath.h"
+#include <DirectXMath.h>
 #include <Windows.h>
 
 // Use our own min/max
@@ -25,8 +25,8 @@ class PathfindingDMap	// Dijkstra map
 {
 public:
 	PathfindingDMap() {
-		neighbours[0] = SimpleMath::Vector2(0, -1); neighbours[1] = SimpleMath::Vector2(-1, 0);
-		neighbours[2] = SimpleMath::Vector2(0, 1); neighbours[3] = SimpleMath::Vector2(1, 0);
+		neighbours[0] = XMINT2(0, -1); neighbours[1] = XMINT2(-1, 0);
+		neighbours[2] = XMINT2(0, 1); neighbours[3] = XMINT2(1, 0);
 	}
 
 	void reset() {
@@ -100,7 +100,7 @@ public:
 
 private:
 	MapMatrix m_filledDMap;		// filled dmap
-	SimpleMath::Vector2 neighbours[4];
+	XMINT2 neighbours[4];
 };
 
 int main(int argc, char* argv[]) {

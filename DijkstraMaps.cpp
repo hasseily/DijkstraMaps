@@ -1,6 +1,8 @@
 // Based on the Console template
 // This is quick and dirty code.
 
+// Uses variable size std::vectors for maps.
+// Cost is about 30% overhead. (0.13ms to 0.17ms)
 
 #include <list>
 #include <algorithm>
